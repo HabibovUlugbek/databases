@@ -1,23 +1,48 @@
 /* eslint-disable no-useless-constructor */
 /* eslint-disable class-methods-use-this */
 /* eslint-disable no-empty-function */
-const CoinAPI = require('../CoinAPI');
+const { MongoClient } = require("mongodb");
+
+const CoinAPI = require("../CoinAPI");
 
 class MongoBackend {
+	constructor() {
+		this.coinAPI = new CoinAPI();
+		this.mongoUrl = "mongodb://localhost:37017/maxcoin";
+		this.client = null;
+		this.collection = null;
+	}
 
-  constructor() {
-    this.coinAPI = new CoinAPI();
-  }
+	async connect() {
+		const mongoClient = new MongoClient(this.mongoUrl);
 
-  async connect() {}
+		this.client = await mongoClient.connect();
+		this.collection = this.client.db("maxcoin").collection("values");
+		return this.client;
+	}
 
-  async disconnect() {}
+	async disconnect() {
+		if (this.client) {
+			return this.client.close();
+		}
+		return false;
+	}
 
-  async insert() {}
+	async insert() {}
 
-  async getMax() {}
+	async getMax() {}
 
-  async max() {}
+	async max() {
+		console.info("Connecting to mongoDB");
+		console.time("mongo");
+		const client = await this.connect();
+		if (client) {
+			console.log("success to mongo");
+		} else {
+			throw new Error("connection failed to mongo");
+		}
+		console.timeEnd("mongo");
+	}
 }
 
 module.exports = MongoBackend;
