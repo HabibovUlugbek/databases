@@ -28,9 +28,23 @@ class MongoBackend {
 		return false;
 	}
 
-	async insert() {}
+	async insert() {
+		const data = await this.coinAPI.fetch();
+		const documents = [];
 
-	async getMax() {}
+		Object.entries(data.bpi).forEach((entry) => {
+			documents.push({
+				date: entry[0],
+				value: entry[1],
+			});
+		});
+
+		return this.collection.insertMany(documents);
+	}
+
+	async getMax() {
+		return this.collection.findOne({}, { sort: { value: -1 } });
+	}
 
 	async max() {
 		console.info("Connecting to mongoDB");
@@ -42,6 +56,19 @@ class MongoBackend {
 			throw new Error("connection failed to mongo");
 		}
 		console.timeEnd("mongo");
+
+		console.time("insert");
+		const insertResults = await this.insert();
+		console.log(insertResults);
+		console.timeEnd("insert");
+
+		console.time("max");
+		const max = await this.getMax();
+		console.log(max);
+		console.timeEnd("max");
+
+		console.info("Disconnecting to mongoDB");
+		await this.disconnect();
 	}
 }
 
