@@ -2,6 +2,7 @@
 
 const http = require("http");
 const mongoose = require("mongoose");
+const Redis = require("ioredis");
 
 const config = require("../config");
 const App = require("../app");
@@ -10,15 +11,32 @@ async function connectToMongoose() {
 	return mongoose.connect(config.mongodb.url, {});
 }
 
+function connectToRedis() {
+	const redis = new Redis(config.redis.port);
+
+	redis.on("connect", () => {
+		console.log("Connected sucesfully");
+	});
+
+	redis.on("error", (err) => {
+		console.log(err);
+
+		process.exit(1);
+	});
+
+	return redis;
+}
+
+const redis = connectToRedis();
+
+config.redis.client = redis;
+
 /* Logic to start the application */
 const app = App(config);
 const port = process.env.PORT || "3000";
 app.set("port", port);
 
 function onError(error) {
-	if (error.syscall !== "listen") {
-		throw error;
-	}
 	const bind = typeof port === "string" ? `Pipe ${port}` : `Port  ${port}`;
 
 	// handle specific listen errors with friendly messages
